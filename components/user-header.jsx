@@ -198,7 +198,7 @@ export default function UserHeader() {
               <button
                 onClick={() => {
                   setMenuOpen(false);
-                  signOut({ callbackUrl: "/" });
+                  signOut({ callbackUrl: "/auth/login" });
                 }}
                 className="block text-red-600 hover:text-red-700"
               >
