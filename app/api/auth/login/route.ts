@@ -3,66 +3,84 @@ import clientPromise from "@/lib/mongodb";
 import { compare } from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// POST /api/auth/login
+// Reuse cached DB connection to avoid slow re-connects
+let cachedDb: any = null;
+
+async function getDb() {
+  if (cachedDb) return cachedDb;
+
+  const client = await clientPromise;
+  cachedDb = client.db("library");
+
+  // Ensure index exists (fast login always)
+  cachedDb.collection("users").createIndex({ email: 1 });
+
+  return cachedDb;
+}
+
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Email and password are required" },
+        { status: 400 }
+      );
     }
 
-    // connect to MongoDB
-    const client = await clientPromise;
-    const db = client.db("library");
+    const db = await getDb();
 
-    const user = await db.collection("users").findOne({ email });
+    // Use projection to reduce payload → faster DB lookup
+    const user = await db.collection("users").findOne(
+      { email },
+      { projection: { passwordHash: 1, email: 1, name: 1, role: 1, status: 1 } }
+    );
 
     if (!user) {
-      return NextResponse.json({ error: "No user found with this email" }, { status: 404 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // block suspended/blocked/banned users
-    if (user.status) {
-      const st = String(user.status).toLowerCase();
-      if (["suspended", "blocked", "banned"].includes(st)) {
-        return NextResponse.json({ error: "This user is suspended." }, { status: 403 });
-      }
+    // blocked/suspended
+    if (user.status && ["suspended", "blocked", "banned"].includes(String(user.status).toLowerCase())) {
+      return NextResponse.json(
+        { error: "This user is suspended." },
+        { status: 403 }
+      );
     }
 
-    // compare password with hash
+    // verify password
     const isValid = await compare(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // create JWT token
+    // Sign JWT
     const token = jwt.sign(
       {
         id: user._id.toString(),
         email: user.email,
-        role: user.role || "user",
+        role: user.role ?? "user",
       },
       process.env.NEXTAUTH_SECRET!,
       { expiresIn: "7d" }
     );
 
-    // you can return token + user info
     return NextResponse.json(
       {
         message: "Login successful",
         token,
         user: {
           id: user._id.toString(),
-          name: user.name,
           email: user.email,
+          name: user.name,
           role: user.role,
         },
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Login error:", error);
+  } catch (err) {
+    console.error("Login error:", err);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
