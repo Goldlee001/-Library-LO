@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Files } from "lucide-react"
+import { Files } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CreditCard,
@@ -93,7 +94,13 @@ export default function AdminSidebar({
             href="/"
             className="text-2xl font-serif font-extrabold text-blue-700"
           >
-            LOZEN
+            <Image
+              src="/images/logo.jpg" // replace with your image path
+              alt="Logo" // description for accessibility
+              width={40}
+              height={40}
+              className="rounded-full border border-gray-300 object-cover"
+            />
           </Link>
           <button
             className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"

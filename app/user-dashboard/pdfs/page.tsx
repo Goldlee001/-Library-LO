@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [newComment, setNewComment] = useState<Record<string, string>>({});
   const [activeCommentPDF, setActiveCommentPDF] = useState<string | null>(null);
 
+  // ---------- LOAD PDFs ----------
   useEffect(() => {
     const load = async () => {
       try {
@@ -56,17 +57,17 @@ export default function DashboardPage() {
     load();
   }, []);
 
-  // bulk likes fetch
+  // ---------- BULK LIKES FETCH ----------
   useEffect(() => {
     const ids = (pdfs || [])
       .map((v) => v._id)
-      .filter((id): id is string => typeof id === 'string');
+      .filter((id): id is string => typeof id === "string");
     if (!ids.length) return;
     (async () => {
       try {
-        const res = await fetch('/api/likes/bulk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/likes/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mediaIds: ids }),
         });
         if (!res.ok) return;
@@ -86,21 +87,24 @@ export default function DashboardPage() {
     }));
     setUserLiked((prev) => ({ ...prev, [id]: !isLiked }));
     try {
-      const res = await fetch('/api/likes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaId: id, action: 'toggle' }),
+      const res = await fetch("/api/likes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mediaId: id, action: "toggle" }),
       });
       if (res.status === 401) {
-        toast.error('Please sign in to like');
-        throw new Error('unauthorized');
+        toast.error("Please sign in to like");
+        throw new Error("unauthorized");
       }
       if (!res.ok) throw new Error();
       const data = await res.json();
       setLikes((p) => ({ ...p, [id]: data.count as number }));
       setUserLiked((p) => ({ ...p, [id]: !!data.liked }));
     } catch {
-      setLikes((p) => ({ ...p, [id]: isLiked ? (p[id] || 0) + 1 : Math.max((p[id] || 1) - 1, 0) }));
+      setLikes((p) => ({
+        ...p,
+        [id]: isLiked ? (p[id] || 0) + 1 : Math.max((p[id] || 1) - 1, 0),
+      }));
       setUserLiked((p) => ({ ...p, [id]: isLiked }));
     }
   };
@@ -116,30 +120,35 @@ export default function DashboardPage() {
     }));
     setNewComment((prev) => ({ ...prev, [pdfId]: "" }));
     try {
-      const res = await fetch('/api/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mediaId: pdfId, text }),
       });
       if (res.status === 401) {
-        toast.error('Please sign in to comment');
-        throw new Error('unauthorized');
+        toast.error("Please sign in to comment");
+        throw new Error("unauthorized");
       }
       if (!res.ok) throw new Error();
       const data = await res.json();
       const serverItem = { user: username, text };
       setComments((prev) => ({
         ...prev,
-        [pdfId]: (prev[pdfId] || []).map((c, i, arr) => (i === arr.length - 1 ? serverItem : c)),
+        [pdfId]: (prev[pdfId] || []).map((c, i, arr) =>
+          i === arr.length - 1 ? serverItem : c
+        ),
       }));
     } catch {
       setComments((prev) => ({
         ...prev,
-        [pdfId]: (prev[pdfId] || []).filter((c, i, arr) => !(i === arr.length - 1 && c === optimistic)),
+        [pdfId]: (prev[pdfId] || []).filter(
+          (c, i, arr) => !(i === arr.length - 1 && c === optimistic)
+        ),
       }));
     }
   };
 
+  // ---------- LOAD COMMENTS ----------
   useEffect(() => {
     if (!activeCommentPDF) return;
     (async () => {
@@ -147,13 +156,16 @@ export default function DashboardPage() {
         const res = await fetch(`/api/comments?mediaId=${activeCommentPDF}`);
         if (!res.ok) return;
         const data = await res.json();
-        const mapped = (data?.items || []).map((it: any) => ({ user: it.userName || 'User', text: it.text as string }));
+        const mapped = (data?.items || []).map((it: any) => ({
+          user: it.userName || "User",
+          text: it.text as string,
+        }));
         setComments((prev) => ({ ...prev, [activeCommentPDF]: mapped }));
       } catch {}
     })();
   }, [activeCommentPDF]);
 
-  // ---------- SORTED / FILTERED LIST ----------
+  // ---------- SORTED / FILTERED PDFs ----------
   const sortedPDFs = useMemo(() => {
     if (!searchTerm.trim()) return pdfs;
     const lower = searchTerm.toLowerCase();
@@ -314,7 +326,7 @@ export default function DashboardPage() {
                         className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
                       >
                         View
-                      </button>
+                      </button>a
                       <button
                         onClick={() => handleDownload(pdf)}
                         className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
@@ -392,7 +404,9 @@ export default function DashboardPage() {
                   className="flex-1 border rounded-md px-2 py-1 text-sm focus:outline-none"
                 />
                 <button
-                  onClick={() => handleAddComment(activeCommentPDF, "User1")}
+                  onClick={() =>
+                    handleAddComment(activeCommentPDF, "User1")
+                  }
                   className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
                 >
                   Post

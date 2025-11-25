@@ -4,21 +4,17 @@ import { authOptions } from "@/app/api/auth/authOptions";
 import clientPromise from "@/lib/mongodb";
 import { v2 as cloudinary } from "cloudinary";
 
-// --- Runtime settings for Next.js serverless ---
+// --- Runtime settings ---
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// --- Cloudinary configuration (server-side only) ---
+// --- Cloudinary config ---
 if (
   !process.env.CLOUDINARY_CLOUD_NAME ||
   !process.env.CLOUDINARY_API_KEY ||
   !process.env.CLOUDINARY_API_SECRET
 ) {
-  console.warn("⚠️ Missing Cloudinary environment variables", {
-    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
-    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? "Loaded" : "Missing",
-    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? "Loaded" : "Missing",
-  });
+  console.warn("⚠️ Missing Cloudinary environment variables");
 }
 
 cloudinary.config({
@@ -34,21 +30,8 @@ export async function POST(req: Request) {
     // Authenticate admin
     const session = await getServerSession(authOptions);
     const user = (session as any)?.user;
-
     if (!session || user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Ensure Cloudinary env is configured at runtime
-    if (
-      !process.env.CLOUDINARY_CLOUD_NAME ||
-      !process.env.CLOUDINARY_API_KEY ||
-      !process.env.CLOUDINARY_API_SECRET
-    ) {
-      return NextResponse.json(
-        { error: "Cloudinary environment variables are not configured on the server" },
-        { status: 500 }
-      );
     }
 
     // Extract form data
@@ -59,20 +42,23 @@ export async function POST(req: Request) {
     const type = (form.get("type") as string | null)?.toLowerCase();
     const scope = ((form.get("scope") as string | null) ?? "library").toLowerCase();
 
-    // Validate input
     if (!file || !type || !["video", "image", "pdf"].includes(type)) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    // Convert File to Buffer for Cloudinary
+    // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Upload to Cloudinary
+    // --- Cloudinary Upload ---
     const uploadResult = await new Promise<any>((resolve, reject) => {
+      let resource_type: "auto" | "video" | "raw" = "auto";
+      if (type === "video") resource_type = "video";
+      else if (type === "pdf") resource_type = "raw"; // IMPORTANT: raw for PDFs
+
       const stream = cloudinary.uploader.upload_stream(
         {
           folder: `uploads/${type}`,
-          resource_type: type === "video" ? "video" : "auto",
+          resource_type,
         },
         (error, result) => {
           if (error) reject(error);
@@ -90,7 +76,7 @@ export async function POST(req: Request) {
       type,
       src: uploadResult?.secure_url,
       scope,
-      description: description && description.trim() ? description.trim() : null,
+      description: description?.trim() || null,
       createdAt: new Date(),
       uploadedBy: user?.id ?? null,
     };

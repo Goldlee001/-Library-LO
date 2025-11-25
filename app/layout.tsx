@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LOZEN",
-  description: "LOZEN for Students",
+  title: "Criminology and Security Library",
+  description: "Criminology and Security Library for Students",
 };
 
 export default function RootLayout({

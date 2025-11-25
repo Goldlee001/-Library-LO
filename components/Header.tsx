@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const BRAND_COLOR = "#800000"; // Maroon color
 
@@ -25,11 +26,13 @@ export const Header = () => {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* 🌟 Logo Section */}
         <Link href="/" className="flex items-center space-x-2">
-          <span
-            className="text-[#2463eb] text-xl font-bold tracking-tight"
-          >
-            LOZEN
-          </span>
+          <Image
+            src="/images/logo.jpg" // replace with your image path
+            alt="Logo" // description for accessibility
+            width={40}
+            height={40}
+            className="rounded-full border border-gray-300 object-cover"
+          />
         </Link>
 
         {/* 🧭 Desktop Navigation */}

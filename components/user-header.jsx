@@ -13,8 +13,12 @@ export default function UserHeader() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const isAuthed = status === "authenticated";
-  const isAdmin = ((session?.user?.role) || "user") === "admin";
-  const userName = (session?.user?.name || session?.user?.username || "User").toString();
+  const isAdmin = (session?.user?.role || "user") === "admin";
+  const userName = (
+    session?.user?.name ||
+    session?.user?.username ||
+    "User"
+  ).toString();
   const userEmail = (session?.user?.email || "").toString();
   const userAvatar = (session?.user?.avatar || "").toString();
   const userInitial = userName?.trim()?.charAt(0)?.toUpperCase() || "U";
@@ -27,14 +31,28 @@ export default function UserHeader() {
   return (
     <nav className="fixed top-0 left-0 w-full bg-[#f3edd7] shadow-sm border-b border-gray-200 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 md:px-8">
-        <Link href="/" className="text-2xl font-serif font-extrabold text-blue-700">
-          LOZEN
+        <Link
+          href="/"
+          className="text-2xl font-serif font-extrabold text-blue-700"
+        >
+          <Image
+            src="/images/logo.jpg" // replace with your image path
+            alt="Logo" // description for accessibility
+            width={40}
+            height={40}
+            className="rounded-full border border-gray-300 object-cover"
+          />
         </Link>
 
         <div className="hidden md:flex items-center space-x-6">
           <div className="flex text-sm font-medium border border-gray-300 rounded overflow-hidden">
             <Link href="/user-dashboard/dashboard">
-              <button className={getLinkClasses("/user-dashboard/dashboard") + " border-r border-gray-300"}>
+              <button
+                className={
+                  getLinkClasses("/user-dashboard/dashboard") +
+                  " border-r border-gray-300"
+                }
+              >
                 All Content
               </button>
             </Link>
@@ -56,7 +74,10 @@ export default function UserHeader() {
           </div>
 
           {isAuthed && isAdmin && (
-            <Link href="/admin-dashboard/user-management" className="text-sm font-medium">
+            <Link
+              href="/admin-dashboard/user-management"
+              className="text-sm font-medium"
+            >
               <button className="px-3 py-1 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition">
                 Admin Dashboard
               </button>
@@ -93,14 +114,23 @@ export default function UserHeader() {
 
               {profileOpen && (
                 <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-md py-2 animate-fadeIn">
-                  <Link href="/user-dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  <Link
+                    href="/user-dashboard/profile"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
                     My Profile
                   </Link>
-                  <Link href="/user-dashboard/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  <Link
+                    href="/user-dashboard/settings"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
                     Settings
                   </Link>
                   {isAuthed && isAdmin && (
-                    <Link href="/admin-dashboard/user-management" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <Link
+                      href="/admin-dashboard/user-management"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
                       Admin Dashboard
                     </Link>
                   )}
@@ -114,13 +144,19 @@ export default function UserHeader() {
               )}
             </div>
           ) : (
-            <Link href="/auth/login" className="text-sm font-medium text-blue-700">
+            <Link
+              href="/auth/login"
+              className="text-sm font-medium text-blue-700"
+            >
               Sign in
             </Link>
           )}
         </div>
 
-        <button className="md:hidden text-gray-700" onClick={() => setMenuOpen(!menuOpen)}>
+        <button
+          className="md:hidden text-gray-700"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
           {menuOpen ? <X size={26} /> : <Menu size={26} />}
         </button>
       </div>
@@ -132,7 +168,13 @@ export default function UserHeader() {
       >
         <div>
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <span className="text-3xl font-extrabold text-blue-600">LOZEN</span>
+            <Image
+              src="/images/logo.jpg" // replace with your image path
+              alt="Logo" // description for accessibility
+              width={40}
+              height={40}
+              className="rounded-full border border-gray-300 object-cover"
+            />
             <button onClick={() => setMenuOpen(false)}>
               <X size={24} className="text-gray-700" />
             </button>
@@ -205,7 +247,11 @@ export default function UserHeader() {
                 Logout
               </button>
             ) : (
-              <Link href="/auth/login" className="block text-blue-700" onClick={() => setMenuOpen(false)}>
+              <Link
+                href="/auth/login"
+                className="block text-blue-700"
+                onClick={() => setMenuOpen(false)}
+              >
                 Sign in
               </Link>
             )}
@@ -239,7 +285,10 @@ export default function UserHeader() {
       </div>
 
       {menuOpen && (
-        <div className="fixed inset-0 bg-[#f3edd7] bg-opacity-40 z-30 md:hidden" onClick={() => setMenuOpen(false)}></div>
+        <div
+          className="fixed inset-0 bg-[#f3edd7] bg-opacity-40 z-30 md:hidden"
+          onClick={() => setMenuOpen(false)}
+        ></div>
       )}
     </nav>
   );
