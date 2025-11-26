@@ -1,12 +1,30 @@
-import { type NextAuthOptions } from "next-auth";
+import { type NextAuthOptions, type User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import clientPromise from "@/lib/mongodb";
-import { compare } from "bcryptjs";
 import { ObjectId } from "mongodb";
+import { compare } from "bcryptjs";
+import { getDatabase } from "@/lib/mongodb";
+
+// Simple in-memory cache with 5-minute TTL
+const userCache = new Map<string, { user: any; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+interface SessionUser extends User {
+  id: string;
+  role: string;
+  name?: string | null;
+  email?: string | null;
+  username?: string;
+  createdAt?: string;
+  lastLogin?: string;
+  avatar?: string;
+}
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
-
+  session: { 
+    strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60, // 7 days
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -15,118 +33,127 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const client = await clientPromise;
-        const db = client.db("library");
-
-        const user = await db.collection("users").findOne({ email: credentials?.email });
-
-        if (!user) throw new Error("No user found with this email");
-
-        if (user.status) {
-          const st = String(user.status).toLowerCase();
-          if (["suspended", "blocked", "banned"].includes(st)) {
-            throw new Error("This user is suspended.");
-          }
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password are required");
         }
 
-        const isValid = await compare(credentials!.password, user.passwordHash);
-        if (!isValid) throw new Error("Invalid password");
+        const cacheKey = `user:${credentials.email}`;
+        const cached = userCache.get(cacheKey);
+        
+        // Return cached user if available and not expired
+        if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+          return cached.user;
+        }
 
-        await db.collection("users").updateOne(
-          { _id: user._id },
-          { $set: { lastLogin: new Date() } }
-        );
+        try {
+          const db = await getDatabase();
+          
+          // Optimize query by only fetching necessary fields
+          const user = await db.collection("users").findOne(
+            { email: credentials.email },
+            { 
+              projection: { 
+                _id: 1,
+                name: 1,
+                email: 1,
+                passwordHash: 1,
+                role: 1,
+                status: 1,
+                username: 1,
+                avatar: 1,
+                createdAt: 1,
+                lastLogin: 1
+              } 
+            }
+          );
 
-        return {
-          id: user._id.toString(),
-          name: user.name,
-          email: user.email,
-          role: user.role || "user",
-        } as any;
+          if (!user) {
+            throw new Error("Invalid email or password");
+          }
+
+          // Check account status
+          if (user.status && ["suspended", "blocked", "banned"].includes(String(user.status).toLowerCase())) {
+            throw new Error("This account has been suspended. Please contact support.");
+          }
+
+          // Verify password
+          const isValid = await compare(credentials.password, user.passwordHash);
+          if (!isValid) {
+            throw new Error("Invalid email or password");
+          }
+
+          // Update last login time without waiting
+          db.collection("users").updateOne(
+            { _id: user._id },
+            { $set: { lastLogin: new Date() } }
+          ).catch(console.error);
+
+          const userData: SessionUser = {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role || "user",
+            username: user.username,
+            avatar: user.avatar,
+            createdAt: user.createdAt?.toISOString(),
+            lastLogin: user.lastLogin?.toISOString(),
+          };
+
+          // Cache the user
+          userCache.set(cacheKey, {
+            user: userData,
+            timestamp: Date.now()
+          });
+
+          return userData;
+        } catch (error) {
+          console.error("Authentication error:", error);
+          throw error; // Re-throw to be handled by NextAuth
+        }
       },
     }),
   ],
-
   callbacks: {
-    async redirect({ url, baseUrl }) {
-      try {
-        const parsedUrl = new URL(url, baseUrl);
-        if (parsedUrl.pathname === "/auth/login") {
-          return baseUrl;
-        }
-        if (parsedUrl.origin === baseUrl) {
-          return parsedUrl.toString();
-        }
-        return baseUrl;
-      } catch {
-        return baseUrl;
-      }
-    },
-
     async jwt({ token, user }) {
-      try {
-        if (user) {
-          token.id = (user as any).id;
-          (token as any).role = (user as any).role;
-          return token;
-        }
-        if (token?.id) {
-          const client = await clientPromise;
-          const db = client.db("library");
-          const dbUser = await db
-            .collection("users")
-            .findOne({ _id: new ObjectId(token.id as string) });
-          if (dbUser?.role) {
-            (token as any).role = dbUser.role;
-          }
-        }
-      } catch (e) {
-        console.error("JWT role refresh failed:", e);
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role;
       }
       return token;
     },
-
     async session({ session, token }) {
       if (token) {
-        try {
-          const client = await clientPromise;
-          const db = client.db("library");
-          const dbUser = await db
-            .collection("users")
-            .findOne({ _id: new ObjectId(token.id as string) });
-
-          session.user = {
-            ...session.user,
-            id: token.id as string,
-            role: (dbUser?.role as string) ?? ((token as any).role as string),
-            name: dbUser?.name ?? session.user?.name,
-            email: dbUser?.email ?? session.user?.email,
-            username: dbUser?.username || undefined,
-            createdAt: dbUser?.createdAt
-              ? new Date(dbUser.createdAt).toISOString()
-              : undefined,
-            lastLogin: dbUser?.lastLogin
-              ? new Date(dbUser.lastLogin).toISOString()
-              : undefined,
-            avatar: dbUser?.avatar || undefined,
-          } as any;
-        } catch (e) {
-          console.error("Session enrichment failed:", e);
-          session.user = {
-            ...session.user,
-            id: token.id as string,
-            role: (token as any).role as string,
-          } as any;
-        }
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          role: (token as any).role,
+        } as SessionUser;
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
-
   pages: {
     signIn: "/auth/login",
     error: "/auth/login",
   },
-
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
+  logger: {
+    error(code, metadata) {
+      console.error(code, metadata);
+    },
+    warn(code) {
+      console.warn(code);
+    },
+    debug(code, metadata) {
+      console.debug(code, metadata);
+    },
+  },
 };

@@ -11,6 +11,10 @@ import Footer from "@/components/Footer";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// ⭐ NEW IMPORT
+import AIChat from "@/components/AIChat";
+
+
 interface MediaItem {
   _id?: string;
   id: number; // fallback index
@@ -322,6 +326,7 @@ function MediaSection({ title, color, items, description, handleOpen, handleDown
           );
         })}
       </div>
+      <AIChat />
     </section>
   );
 }
