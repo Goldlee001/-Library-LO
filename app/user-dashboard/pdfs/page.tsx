@@ -321,12 +321,14 @@ export default function DashboardPage() {
 
                     {/* View + Download */}
                     <div className="flex justify-center gap-3 pb-3">
-                      <button
-                        onClick={() => window.open(pdf.src, "_blank")}
-                        className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
-                      >
-                        View
-                      </button>a
+<a
+  href={`/api/media/${pdf._id}/file`}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="inline-block px-3 py-1 text-sm border rounded-md hover:shadow-md bg-white text-center"
+>
+  View
+</a>
                       <button
                         onClick={() => handleDownload(pdf)}
                         className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
