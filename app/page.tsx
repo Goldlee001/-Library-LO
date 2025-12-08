@@ -149,27 +149,58 @@ export default function LandingPage() {
                 </div>
 
                 {/* PDFs Row */}
-                <div>
-                  <h4 className="text-lg font-semibold mb-3">PDFs</h4>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {pdfs.map((item, index) => (
-                      <div key={`p-${index}`} className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition">
-                        <div className="relative">
-                          <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded">PDF</span>
-                          <iframe
-                            src={`${item.src}#toolbar=0&navpanes=0&scrollbar=0&page=1&view=FitH`}
-                            title={item.title}
-                            className="rounded-md mb-3 w-full h-64 border"
-                          >
-                            This browser does not support PDFs. Please download the PDF to view it.
-                          </iframe>
-                        </div>
-                        <h4 className="text-sm font-medium text-center text-gray-800">{item.title}</h4>
-                        <p className="text-xs text-gray-600 mt-1 line-clamp-2 text-center">{item.description || 'PDF document'}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+{/* PDFs Row */}
+<div>
+  <h4 className="text-lg font-semibold mb-3">PDFs</h4>
+  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {pdfs.map((item, index) => (
+      <div key={`p-${index}`} className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition">
+        <div className="relative h-64 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
+          <div className="text-center p-4">
+            <svg
+              className="w-16 h-16 mx-auto mb-2 text-red-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+              />
+              <text
+                x="50%"
+                y="50%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="currentColor"
+                fontSize="8"
+                fontWeight="bold"
+              >
+                PDF
+              </text>
+            </svg>
+            <a
+              href={item.src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              onClick={(e) => e.stopPropagation()}
+            >
+              View PDF
+            </a>
+          </div>
+        </div>
+        <h4 className="text-sm font-medium text-center text-gray-800">{item.title}</h4>
+        <p className="text-xs text-gray-600 mt-1 line-clamp-2 text-center">
+          {item.description || 'PDF document'}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
               </div>
             )}
           </div>
