@@ -165,7 +165,7 @@ export default function Home() {
       />
       <MediaSection
         title="Image Collection"
-        color="purple"
+        color="blue"
         items={images}
         description="Browse through a gallery of captivating and artistic images from our archives."
         handleOpen={handleOpen}
@@ -173,7 +173,7 @@ export default function Home() {
       />
       <MediaSection
         title="PDF Documents"
-        color="indigo"
+        color="blue"
         items={pdfs}
         description="Access and read a selection of academic and creative PDF documents directly from our library."
         handleOpen={handleOpen}
@@ -300,7 +300,7 @@ function MediaSection({ title, color, items, description, handleOpen, handleDown
                 )}
               </CardHeader>
               <CardContent className="p-4">
-                <h3 className="font-semibold text-lg mb-3 text-gray-800">{item.title}</h3>
+                <h3 className="font-semibold mb-3 text-gray-800">{item.title}</h3>
 
                 <div className="flex justify-end mb-3">
                   <button
