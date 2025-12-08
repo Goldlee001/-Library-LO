@@ -25,7 +25,9 @@ export default function VideoDashboard() {
 
   const [likes, setLikes] = useState<Record<string, number>>({});
   const [userLiked, setUserLiked] = useState<Record<string, boolean>>({});
-  const [comments, setComments] = useState<Record<string, { user: string; text: string }[]>>({});
+  const [comments, setComments] = useState<
+    Record<string, { user: string; text: string }[]>
+  >({});
   const [newComment, setNewComment] = useState<Record<string, string>>({});
   const [activeComment, setActiveComment] = useState<string | null>(null);
 
@@ -36,15 +38,19 @@ export default function VideoDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/media?type=video&scope=library", { cache: "no-store" });
+        const res = await fetch("/api/media?type=video&scope=library", {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error("Failed to load videos");
         const data = await res.json();
-        const items: VideoItem[] = (data?.items || []).map((m: any, i: number) => ({
-          _id: m._id || String(i),
-          title: m.title || "Untitled Video",
-          src: m.src,
-          description: m.description || "No description available",
-        }));
+        const items: VideoItem[] = (data?.items || []).map(
+          (m: any, i: number) => ({
+            _id: m._id || String(i),
+            title: m.title || "Untitled Video",
+            src: m.src,
+            description: m.description || "No description available",
+          }),
+        );
         setVideos(items);
       } catch (e: any) {
         setError(e?.message || "Failed to load");
@@ -57,7 +63,7 @@ export default function VideoDashboard() {
 
   // ---------- BULK FETCH LIKES ----------
   useEffect(() => {
-    const ids = videos.map(v => v._id).filter((id): id is string => !!id);
+    const ids = videos.map((v) => v._id).filter((id): id is string => !!id);
     if (!ids.length) return;
     (async () => {
       try {
@@ -82,8 +88,11 @@ export default function VideoDashboard() {
         const res = await fetch(`/api/comments?mediaId=${activeComment}`);
         if (!res.ok) return;
         const data = await res.json();
-        const mapped = (data?.items || []).map((it: any) => ({ user: it.userName || "User", text: it.text }));
-        setComments(prev => ({ ...prev, [activeComment]: mapped }));
+        const mapped = (data?.items || []).map((it: any) => ({
+          user: it.userName || "User",
+          text: it.text,
+        }));
+        setComments((prev) => ({ ...prev, [activeComment]: mapped }));
       } catch {}
     })();
   }, [activeComment]);
@@ -91,8 +100,11 @@ export default function VideoDashboard() {
   // ---------- LIKE TOGGLE ----------
   const toggleLike = async (id: string) => {
     const isLiked = !!userLiked[id];
-    setLikes(prev => ({ ...prev, [id]: isLiked ? Math.max((prev[id] || 1) - 1, 0) : (prev[id] || 0) + 1 }));
-    setUserLiked(prev => ({ ...prev, [id]: !isLiked }));
+    setLikes((prev) => ({
+      ...prev,
+      [id]: isLiked ? Math.max((prev[id] || 1) - 1, 0) : (prev[id] || 0) + 1,
+    }));
+    setUserLiked((prev) => ({ ...prev, [id]: !isLiked }));
     try {
       const res = await fetch("/api/likes", {
         method: "POST",
@@ -105,11 +117,14 @@ export default function VideoDashboard() {
       }
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setLikes(p => ({ ...p, [id]: data.count as number }));
-      setUserLiked(p => ({ ...p, [id]: !!data.liked }));
+      setLikes((p) => ({ ...p, [id]: data.count as number }));
+      setUserLiked((p) => ({ ...p, [id]: !!data.liked }));
     } catch {
-      setLikes(p => ({ ...p, [id]: isLiked ? (p[id] || 0) + 1 : Math.max((p[id] || 1) - 1, 0) }));
-      setUserLiked(p => ({ ...p, [id]: isLiked }));
+      setLikes((p) => ({
+        ...p,
+        [id]: isLiked ? (p[id] || 0) + 1 : Math.max((p[id] || 1) - 1, 0),
+      }));
+      setUserLiked((p) => ({ ...p, [id]: isLiked }));
     }
   };
 
@@ -118,8 +133,11 @@ export default function VideoDashboard() {
     const text = newComment[videoId]?.trim();
     if (!text) return;
     const optimistic = { user: username, text };
-    setComments(prev => ({ ...prev, [videoId]: [...(prev[videoId] || []), optimistic] }));
-    setNewComment(prev => ({ ...prev, [videoId]: "" }));
+    setComments((prev) => ({
+      ...prev,
+      [videoId]: [...(prev[videoId] || []), optimistic],
+    }));
+    setNewComment((prev) => ({ ...prev, [videoId]: "" }));
 
     try {
       const res = await fetch("/api/comments", {
@@ -134,14 +152,18 @@ export default function VideoDashboard() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       const serverItem = { user: username, text };
-      setComments(prev => ({
+      setComments((prev) => ({
         ...prev,
-        [videoId]: (prev[videoId] || []).map((c, i, arr) => (i === arr.length - 1 ? serverItem : c)),
+        [videoId]: (prev[videoId] || []).map((c, i, arr) =>
+          i === arr.length - 1 ? serverItem : c,
+        ),
       }));
     } catch {
-      setComments(prev => ({
+      setComments((prev) => ({
         ...prev,
-        [videoId]: (prev[videoId] || []).filter((c, i, arr) => !(i === arr.length - 1 && c === optimistic)),
+        [videoId]: (prev[videoId] || []).filter(
+          (c, i, arr) => !(i === arr.length - 1 && c === optimistic),
+        ),
       }));
     }
   };
@@ -157,8 +179,8 @@ export default function VideoDashboard() {
           <button
             onClick={() => {
               fetch(item.src)
-                .then(res => res.blob())
-                .then(blob => {
+                .then((res) => res.blob())
+                .then((blob) => {
                   const url = window.URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
@@ -176,12 +198,15 @@ export default function VideoDashboard() {
           >
             Yes
           </button>
-          <button onClick={() => toast.dismiss()} className="px-3 py-1 rounded-md border border-gray-300 hover:bg-gray-100 transition">
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-3 py-1 rounded-md border border-gray-300 hover:bg-gray-100 transition"
+          >
             No
           </button>
         </div>
       </div>,
-      { autoClose: false, closeOnClick: false }
+      { autoClose: false, closeOnClick: false },
     );
   };
 
@@ -189,7 +214,7 @@ export default function VideoDashboard() {
   const filteredVideos = useMemo(() => {
     if (!searchTerm.trim()) return videos;
     const lower = searchTerm.toLowerCase();
-    return videos.filter(v => v.title.toLowerCase().includes(lower));
+    return videos.filter((v) => v.title.toLowerCase().includes(lower));
   }, [searchTerm, videos]);
 
   // ---------- RENDER ----------
@@ -204,7 +229,7 @@ export default function VideoDashboard() {
           type="text"
           placeholder="Search videos..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="px-3 py-2 rounded-md border border-gray-300 w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -216,7 +241,7 @@ export default function VideoDashboard() {
 
       <motion.div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 px-6">
         <AnimatePresence>
-          {filteredVideos.slice(0, visibleVideos).map(video => {
+          {filteredVideos.slice(0, visibleVideos).map((video) => {
             const key = video._id || video.src;
             const liked = userLiked[key] || false;
             const likeCount = likes[key] || 0;
@@ -235,12 +260,19 @@ export default function VideoDashboard() {
                   className="w-full h-40 object-cover cursor-pointer"
                   onClick={() => setSelectedVideo(video.src)}
                 />
-                <p className="p-2 text-sm font-medium text-center">{video.title}</p>
-                <p className="px-2 text-xs text-gray-500 text-center">{video.description}</p>
+                <p className="p-3 pb-1 text-sm font-medium ">{video.title}</p>
+                <p className="px-3 text-xs text-gray-500 ">
+                  {video.description}
+                </p>
 
                 <div className="flex justify-center gap-4 items-center py-2">
-                  <button onClick={() => toggleLike(key)} className="flex items-center gap-1 text-sm">
-                    <Heart className={`w-5 h-5 ${liked ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+                  <button
+                    onClick={() => toggleLike(key)}
+                    className="flex items-center gap-1 text-sm"
+                  >
+                    <Heart
+                      className={`w-5 h-5 ${liked ? "fill-red-500 text-red-500" : "text-gray-400"}`}
+                    />
                     <span>{likeCount}</span>
                   </button>
 
@@ -249,20 +281,23 @@ export default function VideoDashboard() {
                     className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    <span>{comments[key]?.length || 0} Comment{(comments[key]?.length || 0) !== 1 && "s"}</span>
+                    <span>
+                      {comments[key]?.length || 0} Comment
+                      {(comments[key]?.length || 0) !== 1 && "s"}
+                    </span>
                   </button>
                 </div>
 
-                <div className="flex justify-center gap-3 pb-3">
+                <div className="flex justify-between gap-3 pb-3 px-5">
                   <button
                     onClick={() => setSelectedVideo(video.src)}
-                    className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
+                    className="px-3 py-1 text-sm border w-100 rounded-md hover:shadow-md"
                   >
                     Watch
                   </button>
                   <button
                     onClick={() => handleDownload(video)}
-                    className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
+                    className="px-3 py-1 text-sm border w-100 rounded-md hover:shadow-md"
                   >
                     Download
                   </button>
@@ -273,7 +308,11 @@ export default function VideoDashboard() {
         </AnimatePresence>
       </motion.div>
 
-      <ViewMoreButton visibleCount={visibleVideos} totalCount={filteredVideos.length} setVisible={setVisibleVideos} />
+      <ViewMoreButton
+        visibleCount={visibleVideos}
+        totalCount={filteredVideos.length}
+        setVisible={setVisibleVideos}
+      />
 
       {/* ---------- COMMENT POPUP ---------- */}
       <AnimatePresence>
@@ -291,19 +330,27 @@ export default function VideoDashboard() {
               exit={{ scale: 0.8 }}
               className="bg-white rounded-lg w-full max-w-md p-4 shadow-lg relative"
             >
-              <button onClick={() => setActiveComment(null)} className="absolute top-2 right-2 text-gray-500 hover:text-black">
+              <button
+                onClick={() => setActiveComment(null)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-black"
+              >
                 <X className="w-5 h-5" />
               </button>
 
-              <h3 className="text-lg font-semibold mb-2 text-center">Comments</h3>
+              <h3 className="text-lg font-semibold mb-2 text-center">
+                Comments
+              </h3>
 
               <div className="max-h-64 overflow-y-auto border rounded-md p-2 mb-3 text-sm">
                 {(comments[activeComment] || []).length === 0 ? (
-                  <p className="text-gray-400 text-center">No comments yet. Be the first!</p>
+                  <p className="text-gray-400 text-center">
+                    No comments yet. Be the first!
+                  </p>
                 ) : (
                   comments[activeComment].map((c, i) => (
                     <p key={i} className="mb-1">
-                      <span className="font-semibold">{c.user}: </span>{c.text}
+                      <span className="font-semibold">{c.user}: </span>
+                      {c.text}
                     </p>
                   ))
                 )}
@@ -314,10 +361,18 @@ export default function VideoDashboard() {
                   type="text"
                   placeholder="Write a comment..."
                   value={newComment[activeComment] || ""}
-                  onChange={e => setNewComment(prev => ({ ...prev, [activeComment]: e.target.value }))}
+                  onChange={(e) =>
+                    setNewComment((prev) => ({
+                      ...prev,
+                      [activeComment]: e.target.value,
+                    }))
+                  }
                   className="flex-1 border rounded-md px-2 py-1 text-sm focus:outline-none"
                 />
-                <button onClick={() => handleAddComment(activeComment, "User1")} className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm">
+                <button
+                  onClick={() => handleAddComment(activeComment, "User1")}
+                  className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
+                >
                   Post
                 </button>
               </div>
@@ -335,9 +390,22 @@ export default function VideoDashboard() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
           >
-            <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} className="relative w-full max-w-3xl">
-              <video src={selectedVideo} controls autoPlay className="w-full max-h-[80vh] rounded-lg" />
-              <button onClick={() => setSelectedVideo(null)} className="absolute top-2 right-2 bg-white/80 rounded-full p-2">
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              className="relative w-full max-w-3xl"
+            >
+              <video
+                src={selectedVideo}
+                controls
+                autoPlay
+                className="w-full max-h-[80vh] rounded-lg"
+              />
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="absolute top-2 right-2 bg-white/80 rounded-full p-2"
+              >
                 <X className="w-5 h-5 text-black" />
               </button>
             </motion.div>
@@ -350,17 +418,32 @@ export default function VideoDashboard() {
 
 // ---------- REUSABLE COMPONENTS ----------
 function SectionHeader({ title }: { title: string }) {
-  return <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center mt-12">{title}</h2>;
+  return (
+    <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center mt-12">
+      {title}
+    </h2>
+  );
 }
 
-function ViewMoreButton({ visibleCount, totalCount, setVisible }: { visibleCount: number; totalCount: number; setVisible: React.Dispatch<React.SetStateAction<number>> }) {
+function ViewMoreButton({
+  visibleCount,
+  totalCount,
+  setVisible,
+}: {
+  visibleCount: number;
+  totalCount: number;
+  setVisible: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const handleToggle = () => {
-    if (visibleCount < totalCount) setVisible(v => v + 4);
+    if (visibleCount < totalCount) setVisible((v) => v + 4);
     else setVisible(4);
   };
   return (
     <div className="flex justify-center mt-6">
-      <button onClick={handleToggle} className="px-5 py-2 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition">
+      <button
+        onClick={handleToggle}
+        className="px-5 py-2 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition"
+      >
         {visibleCount < totalCount ? "View More" : "Hide"}
       </button>
     </div>

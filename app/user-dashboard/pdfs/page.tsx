@@ -135,14 +135,14 @@ export default function DashboardPage() {
       setComments((prev) => ({
         ...prev,
         [pdfId]: (prev[pdfId] || []).map((c, i, arr) =>
-          i === arr.length - 1 ? serverItem : c
+          i === arr.length - 1 ? serverItem : c,
         ),
       }));
     } catch {
       setComments((prev) => ({
         ...prev,
         [pdfId]: (prev[pdfId] || []).filter(
-          (c, i, arr) => !(i === arr.length - 1 && c === optimistic)
+          (c, i, arr) => !(i === arr.length - 1 && c === optimistic),
         ),
       }));
     }
@@ -171,7 +171,7 @@ export default function DashboardPage() {
     const lower = searchTerm.toLowerCase();
     const matches = pdfs.filter((v) => v.title.toLowerCase().includes(lower));
     const nonMatches = pdfs.filter(
-      (v) => !v.title.toLowerCase().includes(lower)
+      (v) => !v.title.toLowerCase().includes(lower),
     );
     return [...matches, ...nonMatches];
   }, [searchTerm, pdfs]);
@@ -179,7 +179,7 @@ export default function DashboardPage() {
   const hasMatches = useMemo(() => {
     if (!searchTerm.trim()) return true;
     return pdfs.some((v) =>
-      v.title.toLowerCase().includes(searchTerm.toLowerCase())
+      v.title.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [searchTerm, pdfs]);
 
@@ -221,7 +221,7 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>,
-      { autoClose: false, closeOnClick: false }
+      { autoClose: false, closeOnClick: false },
     );
   };
 
@@ -284,10 +284,8 @@ export default function DashboardPage() {
                     <div className="relative flex items-center justify-center h-40 bg-gray-100">
                       <FileText className="text-blue-600 w-12 h-12 opacity-70" />
                     </div>
-                    <p className="p-2 text-sm font-medium text-center">
-                      {pdf.title}
-                    </p>
-                    <p className="px-2 text-xs text-gray-500 text-center">
+                    <p className="p-3 pb-1 text-sm font-medium ">{pdf.title}</p>
+                    <p className="px-3 text-xs text-gray-500 ">
                       {pdf.description}
                     </p>
 
@@ -320,18 +318,18 @@ export default function DashboardPage() {
                     </div>
 
                     {/* View + Download */}
-                    <div className="flex justify-center gap-3 pb-3">
-<a
-  href={`/api/media/${pdf._id}/file`}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="inline-block px-3 py-1 text-sm border rounded-md hover:shadow-md bg-white text-center"
->
-  View
-</a>
+                    <div className="flex justify-between gap-3 pb-3 px-5">
+                      <a
+                        href={`/api/media/${pdf._id}/file`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-3 py-1 text-sm border w-100 rounded-md hover:shadow-md bg-white text-center"
+                      >
+                        View
+                      </a>
                       <button
                         onClick={() => handleDownload(pdf)}
-                        className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
+                        className="px-3 py-1 text-sm border w-100 rounded-md hover:shadow-md"
                       >
                         Download
                       </button>
@@ -406,9 +404,7 @@ export default function DashboardPage() {
                   className="flex-1 border rounded-md px-2 py-1 text-sm focus:outline-none"
                 />
                 <button
-                  onClick={() =>
-                    handleAddComment(activeCommentPDF, "User1")
-                  }
+                  onClick={() => handleAddComment(activeCommentPDF, "User1")}
                   className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
                 >
                   Post

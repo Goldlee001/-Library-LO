@@ -32,7 +32,7 @@ export default function DashboardPage() {
   >({});
   const [newComment, setNewComment] = useState<Record<string, string>>({});
   const [activeCommentImage, setActiveCommentImage] = useState<string | null>(
-    null
+    null,
   );
 
   // ---------- LIKE TOGGLE ----------
@@ -44,21 +44,24 @@ export default function DashboardPage() {
     }));
     setUserLiked((prev) => ({ ...prev, [id]: !isLiked }));
     try {
-      const res = await fetch('/api/likes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaId: id, action: 'toggle' }),
+      const res = await fetch("/api/likes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mediaId: id, action: "toggle" }),
       });
       if (res.status === 401) {
-        toast.error('Please sign in to like');
-        throw new Error('unauthorized');
+        toast.error("Please sign in to like");
+        throw new Error("unauthorized");
       }
       if (!res.ok) throw new Error();
       const data = await res.json();
       setLikes((p) => ({ ...p, [id]: data.count as number }));
       setUserLiked((p) => ({ ...p, [id]: !!data.liked }));
     } catch {
-      setLikes((p) => ({ ...p, [id]: isLiked ? (p[id] || 0) + 1 : Math.max((p[id] || 1) - 1, 0) }));
+      setLikes((p) => ({
+        ...p,
+        [id]: isLiked ? (p[id] || 0) + 1 : Math.max((p[id] || 1) - 1, 0),
+      }));
       setUserLiked((p) => ({ ...p, [id]: isLiked }));
     }
   };
@@ -74,26 +77,30 @@ export default function DashboardPage() {
     }));
     setNewComment((prev) => ({ ...prev, [imageId]: "" }));
     try {
-      const res = await fetch('/api/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mediaId: imageId, text }),
       });
       if (res.status === 401) {
-        toast.error('Please sign in to comment');
-        throw new Error('unauthorized');
+        toast.error("Please sign in to comment");
+        throw new Error("unauthorized");
       }
       if (!res.ok) throw new Error();
       const data = await res.json();
       const serverItem = { user: username, text };
       setComments((prev) => ({
         ...prev,
-        [imageId]: (prev[imageId] || []).map((c, i, arr) => (i === arr.length - 1 ? serverItem : c)),
+        [imageId]: (prev[imageId] || []).map((c, i, arr) =>
+          i === arr.length - 1 ? serverItem : c,
+        ),
       }));
     } catch {
       setComments((prev) => ({
         ...prev,
-        [imageId]: (prev[imageId] || []).filter((c, i, arr) => !(i === arr.length - 1 && c === optimistic)),
+        [imageId]: (prev[imageId] || []).filter(
+          (c, i, arr) => !(i === arr.length - 1 && c === optimistic),
+        ),
       }));
     }
   };
@@ -107,12 +114,14 @@ export default function DashboardPage() {
         });
         if (!res.ok) throw new Error("Failed to load images");
         const data = await res.json();
-        const items: ImageItem[] = (data?.items || []).map((m: any, i: number) => ({
-          _id: m._id || String(i),
-          title: m.title || "Untitled",
-          src: m.src,
-          description: m.description || "No description available",
-        }));
+        const items: ImageItem[] = (data?.items || []).map(
+          (m: any, i: number) => ({
+            _id: m._id || String(i),
+            title: m.title || "Untitled",
+            src: m.src,
+            description: m.description || "No description available",
+          }),
+        );
         setImages(items);
       } catch (e: any) {
         setError(e?.message || "Failed to load");
@@ -127,13 +136,13 @@ export default function DashboardPage() {
   useEffect(() => {
     const ids = (images || [])
       .map((v) => v._id)
-      .filter((id): id is string => typeof id === 'string');
+      .filter((id): id is string => typeof id === "string");
     if (!ids.length) return;
     (async () => {
       try {
-        const res = await fetch('/api/likes/bulk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/likes/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mediaIds: ids }),
         });
         if (!res.ok) return;
@@ -152,7 +161,10 @@ export default function DashboardPage() {
         const res = await fetch(`/api/comments?mediaId=${activeCommentImage}`);
         if (!res.ok) return;
         const data = await res.json();
-        const mapped = (data?.items || []).map((it: any) => ({ user: it.userName || 'User', text: it.text as string }));
+        const mapped = (data?.items || []).map((it: any) => ({
+          user: it.userName || "User",
+          text: it.text as string,
+        }));
         setComments((prev) => ({ ...prev, [activeCommentImage]: mapped }));
       } catch {}
     })();
@@ -163,13 +175,17 @@ export default function DashboardPage() {
     if (!searchTerm.trim()) return images;
     const lower = searchTerm.toLowerCase();
     const matches = images.filter((v) => v.title.toLowerCase().includes(lower));
-    const nonMatches = images.filter((v) => !v.title.toLowerCase().includes(lower));
+    const nonMatches = images.filter(
+      (v) => !v.title.toLowerCase().includes(lower),
+    );
     return [...matches, ...nonMatches];
   }, [searchTerm, images]);
 
   const hasMatches = useMemo(() => {
     if (!searchTerm.trim()) return true;
-    return images.some((v) => v.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    return images.some((v) =>
+      v.title.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
   }, [searchTerm, images]);
 
   // ---------- DOWNLOAD ----------
@@ -210,7 +226,7 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>,
-      { autoClose: false, closeOnClick: false }
+      { autoClose: false, closeOnClick: false },
     );
   };
 
@@ -278,10 +294,10 @@ export default function DashboardPage() {
                       decoding="async"
                     />
 
-                    <p className="p-2 text-sm font-medium text-center">
+                    <p className="p-3 pb-1 text-sm font-medium ">
                       {image.title}
                     </p>
-                    <p className="px-2 text-xs text-gray-500 text-center">
+                    <p className="px-3 text-xs text-gray-500 ">
                       {image.description}
                     </p>
 
@@ -292,7 +308,9 @@ export default function DashboardPage() {
                       >
                         <Heart
                           className={`w-5 h-5 ${
-                            liked ? "fill-red-500 text-red-500" : "text-gray-400"
+                            liked
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-400"
                           }`}
                         />
                         <span>{likeCount}</span>
@@ -310,16 +328,16 @@ export default function DashboardPage() {
                       </button>
                     </div>
 
-                    <div className="flex justify-center gap-3 pb-3">
+                    <div className="flex justify-between gap-3 pb-3 px-5">
                       <button
                         onClick={() => setSelectedImage(image.src)}
-                        className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
+                        className="px-3 py-1 text-sm border w-100 rounded-md hover:shadow-md"
                       >
                         View
                       </button>
                       <button
                         onClick={() => handleDownload(image)}
-                        className="px-3 py-1 text-sm border rounded-md hover:shadow-md"
+                        className="px-3 py-1 text-sm border w-100 rounded-md hover:shadow-md"
                       >
                         Download
                       </button>
